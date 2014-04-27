@@ -33,7 +33,7 @@ public class Mode{
     }
     
     public String toString(){
-        String str = "Mode: id: " + " Bandwidth: " + bandwidth + " Features: ";
+        String str = "Mode: id: " + id + " Bandwidth: " + bandwidth + " Features: ";
         for(int i = 0; i < features.length; i++){
             str += features[i] + ", ";
         }

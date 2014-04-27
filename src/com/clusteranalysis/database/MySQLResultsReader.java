@@ -9,6 +9,7 @@ package com.clusteranalysis.database;
  * @author victor
  */
 import com.clusteranalysis.datamodel.*;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -20,11 +21,9 @@ import java.util.ArrayList;
 public class MySQLResultsReader implements ClusterResultReader {
 
     private Connection conn;
-    private Connection connSources;
 
-    public MySQLResultsReader(Connection conn, Connection connSources) {
+    public MySQLResultsReader(Connection conn) {
         this.conn = conn;
-        this.connSources = connSources;
     }
 
     @Override
@@ -74,7 +73,7 @@ public class MySQLResultsReader implements ClusterResultReader {
     }
 
     @Override
-    public int NumberOfModes(double bandwidth) throws ResultReaderException {
+    public long NumberOfModes(double bandwidth) throws ResultReaderException {
 
         try {
             //Get the bandwidth id for this bandwidth
@@ -86,7 +85,7 @@ public class MySQLResultsReader implements ClusterResultReader {
             ResultSet rs = stmt.executeQuery(query);
 
             if (rs.next()) {
-                return rs.getInt(1);
+                return rs.getLong(1);
             } else {
                 return 0;
             }
@@ -275,53 +274,82 @@ public class MySQLResultsReader implements ClusterResultReader {
 
     }
 
-    private List<Long> GetSources(long bandwidth_id, long id_mode) throws SQLException {
+    /**
+     * 
+     * @param bandwidth_id
+     * @param id_mode
+     * @param attributeNames
+     * @return
+     * @throws SQLException 
+     */
+    private List<DataSample> GetSources(long bandwidth_id,
+            long id_mode,
+            List<String> attributeNames) throws SQLException {
 
-        //execute query and return result as a ResultSet
-        String query = "SELECT id_source FROM Cluster_membership WHERE";
-        query += " id_mode=" + id_mode + " AND bandwidth=" + bandwidth_id;
+        //Get the column names for the query
+        String colNames;
+        if (attributeNames.size() == 0) {
+            colNames = "*";
+        } else {
+            colNames = "id";
+            for (int i = 0; i < attributeNames.size(); i++) {
+                colNames += ", " + attributeNames.get(i);
+            }
+        }
+
+        //Subquery to get the Source Id 
+        String subQuerySourceId = "( SELECT id_source FROM Cluster_membership WHERE";
+        subQuerySourceId += " id_mode=" + id_mode + " AND bandwidth=" + bandwidth_id + ")";
+
+        //Query returning the sources with the column selected
+        String query = "SELECT " + colNames + " FROM Astrosources.Dataset_pleiades";
+        query += " WHERE id IN " + subQuerySourceId;
+
+        //Execute query
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery(query);
-
-        //output list
-        List<Long> sources = new ArrayList<Long>();
-        while (rs.next()) {
-            sources.add(rs.getLong(1));
-        }
-        return sources;
-    }
-
-    private DataSample GetSource(long source_id) throws SQLException {
-
-        //Get row for this data sample
-        String query = "SELECT * FROM Dataset_pleiades WHERE id=" + source_id;
-        Statement stmt = connSources.createStatement();
-        ResultSet rs = stmt.executeQuery(query);
-        rs.first();
 
         //Get number of columns
         ResultSetMetaData rsMetaData = rs.getMetaData();
         int numberOfColumns = rsMetaData.getColumnCount();
         int numberFeatures = numberOfColumns - 1;
 
-        //Extract features
-        Object[] features = new Object[numberFeatures];
-        for (int i = 1; i < numberFeatures; i++) {
-            features[i] = rs.getObject(i + 1);
+        //Create DataSamples object
+        List<DataSample> sources = new ArrayList<DataSample>();
+        while (rs.next()) {
+
+            Object[] features = new Object[numberFeatures];
+            long source_id = rs.getLong(1);
+            for (int i = 0; i < numberFeatures; i++) {
+                features[i] = rs.getObject(i + 2);
+            }
+
+            sources.add(new DataSample(source_id, features));
         }
 
-        //TODO: Some fields should be mapped to string after conversion of keys
-        return new DataSample(source_id, features);
+        return sources;
     }
 
     @Override
-    public int NumberOfSources(Mode mode) throws ResultReaderException {
+    public long NumberOfSources(Mode mode) throws ResultReaderException {
 
         try {
-            //Get the id of sources under this mode
-            List<Long> sources_id = GetSources(GetBandwidthId(mode.getBandwidth()),
-                    mode.getId());
-            return sources_id.size();
+            //Create count query
+            long bandwidth_id = GetBandwidthId(mode.getBandwidth());
+            long mode_id = mode.getId();
+            String query = "SELECT COUNT(*) FROM Cluster_membership WHERE";
+            query += " id_mode=" + mode_id + " AND bandwidth=" + bandwidth_id;
+
+            //Execute query
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(query);
+
+            if (rs.next()) {
+                return rs.getLong(1);
+            } else {
+                return 0;
+            }
+
         } catch (SQLException e) {
             throw new ResultReaderException(e.getMessage(), e.getCause());
         }
@@ -329,33 +357,43 @@ public class MySQLResultsReader implements ClusterResultReader {
     }
 
     @Override
-    public List<DataSample> GetSources(Mode mode) throws ResultReaderException {
+    public List<DataSample> GetSources(Mode mode, List<String> attributeNames) throws ResultReaderException {
 
         List<DataSample> sources;
 
         try {
             //Get the id of sources under this mode
-            List<Long> sources_id = GetSources(GetBandwidthId(mode.getBandwidth()),
-                    mode.getId());
-
-            //Construct source objects
-
-
-            sources = new ArrayList<DataSample>();
-            for (int i = 0; i < sources_id.size(); i++) {
-                sources.add(GetSource(sources_id.get(i)));
-            }
-
-
+            long bandwidth_id = GetBandwidthId(mode.getBandwidth());
+            long mode_id = mode.getId();
+            sources = GetSources(bandwidth_id, mode_id, attributeNames);
         } catch (SQLException e) {
             throw new ResultReaderException(e.getMessage(), e.getCause());
         }
-
 
         return sources;
 
     }
 
+    @Override
+    public List<Cluster> GetClusters(double bandwidth, List<String> attributeNames)  throws ResultReaderException{
+        
+        
+        List<Mode> modes = GetModes(bandwidth);
+        int numberModes = modes.size();
+        List<Cluster> clusters = new ArrayList<Cluster>( modes.size() );                
+        
+        for(int i = 0; i < numberModes; i++){
+            Mode mode = modes.get(i);
+            List<DataSample> sources = GetSources(mode, attributeNames);
+            //DEBUG
+            System.out.println("Retrieving sources for mode: " + (i+1) + " out of " + numberModes + ". Number of sources: " + sources.size() );
+            clusters.add( new Cluster(mode, sources ) );            
+        }
+        
+        return clusters;
+        
+    }
+    
     /**
      * For test purposes
      * 
@@ -388,7 +426,7 @@ public class MySQLResultsReader implements ClusterResultReader {
         Connection connSources = java.sql.DriverManager.getConnection(dbURLSources, dbUser, dbpassword);
 
         //Test this class
-        MySQLResultsReader resultsDB = new MySQLResultsReader(conn, connSources);
+        MySQLResultsReader resultsDB = new MySQLResultsReader(conn);
 
         //Get features names
         System.out.print("There are: " + resultsDB.NumberOfFeatures() + " features ");
@@ -401,10 +439,14 @@ public class MySQLResultsReader implements ClusterResultReader {
         System.out.println(" is " + resultsDB.NumberOfModes(bandwidths.get(0)));
 
         List<Mode> modes = resultsDB.GetModes(bandwidths.get(0));
-        System.out.println("First Mode for bandwidth=" + bandwidths.get(0) + " : " + modes.get(0));
+        System.out.println("First Mode for bandwidth=" + bandwidths.get(0) + " is: " + modes.get(0));
 
         System.out.println("Data samples for first mode=" + resultsDB.NumberOfSources(modes.get(0)));
-        System.out.println("First Data samples for first mode=" + resultsDB.GetSources(modes.get(0)).get(0) );
+
+        ArrayList<String> variables = new ArrayList<String>( );
+        variables.add("muAcosD");
+        variables.add("muD");
+        System.out.println("First Data samples for first mode=" + resultsDB.GetSources(modes.get(0), variables).get(0) );
 
     }
 }
