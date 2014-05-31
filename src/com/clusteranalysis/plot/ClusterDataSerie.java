@@ -16,16 +16,26 @@ import com.clusteranalysis.datamodel.*;
  */
 public class ClusterDataSerie extends DataSerie {
     
-    private Cluster cluster;
+    final private Cluster cluster;
     
-    public ClusterDataSerie(Cluster cluster, Color color, Shape shape){
-        super(color, shape);
+    public ClusterDataSerie(Cluster cluster, String name, Color color, Shape shape){
+        super(name, color, shape);
         this.cluster = cluster;        
+    }
+    
+    public ClusterDataSerie(Cluster cluster, String name, Shape shape){        
+        super(name, shape);
+        this.cluster = cluster;         
     }
     
     public Cluster GetCluster(){
         return cluster;
     }    
+    
+    @Override
+    public DataItem GetDataItem(int index){
+        return cluster.GetSample(index);
+    }
        
     public double[][] GetDataSerie(){
         

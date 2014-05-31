@@ -63,7 +63,7 @@ public class CSVResultReader implements ClusterResultReader {
                 String[] modeLine = line.split(separator);
                 long id = Long.parseLong(modeLine[0]);
                 double bw = Double.parseDouble(modeLine[1]);
-                double features[] = new double[modeHeaders.size() - 2];
+                Object features[] = new Object[modeHeaders.size() - 2];
                 for(int i = 2; i < modeHeaders.size(); i++){
                     features[i-2] = Double.parseDouble(modeLine[i]);
                 }

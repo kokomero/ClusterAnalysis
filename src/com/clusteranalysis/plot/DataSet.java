@@ -17,5 +17,7 @@ public abstract class DataSet extends DefaultXYDataset  {
         
     }
     
-    abstract void addSeries(Comparable seriesKey, DataSerie serie);
+    abstract void addSeries(DataSerie serie);
+    
+    
 }

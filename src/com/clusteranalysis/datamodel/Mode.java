@@ -8,30 +8,19 @@ package com.clusteranalysis.datamodel;
  *
  * @author victor
  */
-public class Mode{
-    
-    protected long id;
+public class Mode extends DataItem{
+        
     protected double bandwidth;
-    protected double[] features;
     
-    public Mode(long id, double bw, double[] features){
-        this.id = id;
-        this.features = features;
+    public Mode(long id, double bw, Object[] features){
+        super(id, features);
         this.bandwidth = bw;        
     }
     
     public double getBandwidth(){        
         return this.bandwidth;
     }
-    
-    public long getId(){
-        return this.id;
-    }
-    
-    public double[] getFeatures(){
-        return this.features;
-    }
-    
+   
     public String toString(){
         String str = "Mode: id: " + id + " Bandwidth: " + bandwidth + " Features: ";
         for(int i = 0; i < features.length; i++){

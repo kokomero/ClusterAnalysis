@@ -1,0 +1,6 @@
+
+- Hacer medidas de calidad intra-inter clusters
+- Poder seleccionar que se vea o se oculte cada uno de los clusters individuales
+- Poder seleccionar una muestra y que saque información de la misma
+- Seleccionar un cluster y que saque información de los mismos
+- Hacer metodo para crear Random Shapes para cada una de las dataseries

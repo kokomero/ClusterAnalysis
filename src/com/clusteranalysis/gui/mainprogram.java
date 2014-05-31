@@ -7,9 +7,9 @@ package com.clusteranalysis.gui;
 //Imports are listed in full to show what's being used
 //could just import javax.swing.* and java.awt.* etc..
 
-import java.util.Random;
 import java.util.List;
 import java.util.Vector;
+import java.text.NumberFormat;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,9 +19,6 @@ import javax.swing.JOptionPane;
 import com.clusteranalysis.database.*;
 import com.clusteranalysis.datamodel.*;
 import com.clusteranalysis.plot.PlotUtils;
-import java.util.Properties;
-
-
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -36,9 +33,13 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 
 import org.jfree.data.xy.DefaultXYDataset;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.RefineryUtilities;
 import org.jfree.util.ShapeUtilities;
+
+import com.clusteranalysis.plot.ClustersDataSet;
+import com.clusteranalysis.plot.ModesDataSerie;
+import com.clusteranalysis.plot.ClusterDataSerie;
+import com.clusteranalysis.plot.ClusterToolTipGenerator;
 
 public class mainprogram {
 
@@ -212,32 +213,23 @@ public class mainprogram {
         }
 
         //Create the data set
-        final DefaultXYDataset dataset = new DefaultXYDataset();
-
-        //Get a reference to the renderer of the plot 
-        XYItemRenderer renderer = (XYItemRenderer) chart.getXYPlot().getRenderer();
-
-        //Random generator for random colors.
-        Random randColor = new Random();
-       
+        final ClustersDataSet dataset = new ClustersDataSet();     
+          
         //Add a serie for mode
-        dataset.addSeries("Modes", PlotUtils.GetModesDataSeries(clusters));
-        renderer.setSeriesPaint(0, Color.BLACK);
-        renderer.setSeriesShape(0, ShapeUtilities.createDiagonalCross(3, 1));
+        ModesDataSerie modes = new ModesDataSerie( PlotUtils.GetModes(clusters),
+                Color.BLACK, 
+                ShapeUtilities.createDiagonalCross(3, 1));                
+        dataset.addSeries(modes);  
   
         //for each mode add data points belonging to cluster
         for (int i = 0; i < numberClusters; i++) {
-            Mode mode = clusters.get(i).GetMode();
-            List<DataSample> sources = clusters.get(i).GetSamples();
-
-            //Add data serie
-            dataset.addSeries("Mode: " + mode.getId(), PlotUtils.GetSourcesDataSeries(sources));
-            //Print each serie in random colors
-            Color randomColor = new Color(randColor.nextInt(127) + 127,
-                    randColor.nextInt(127) + 127,
-                    randColor.nextInt(127) + 127);
-
-            renderer.setSeriesPaint(i + 1, randomColor);
+            String serieId = "Mode: " + clusters.get(i).GetMode().getId();
+            
+            //Create and add the data serie
+            ClusterDataSerie serie = new ClusterDataSerie(clusters.get(i), 
+                    serieId,
+                    ShapeUtilities.createDiamond(2));
+            dataset.addSeries(serie);
         }
 
         //El renderer recibe un XYPlot, que internamente tiene un dataset
@@ -245,6 +237,16 @@ public class mainprogram {
         //y del simbolo quizás sería más facil.
         //Y luego creamos un renderer derivado que admite nuestro particular DataSet
 
+        //Get a reference to the renderer of the plot  and modify color and shapes
+        //for each serie
+        XYItemRenderer renderer = (XYItemRenderer) chart.getXYPlot().getRenderer();
+        renderer.setToolTipGenerator(new ClusterToolTipGenerator() );
+        
+        for(int i = 0; i < dataset.getSeriesCount(); i++){
+            renderer.setSeriesPaint(i, dataset.getSeries(i).GetColor() );
+            renderer.setSeriesShape(i, dataset.getSeries(i).GetShape() );
+        }
+        
         //Change title and axis names
         chart.setTitle("Modes bandwidth=" + bandwidth);
         chart.getXYPlot().getDomainAxis().setLabel(variables.get(0));
@@ -257,10 +259,7 @@ public class mainprogram {
         Stroke modesStroke = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
         renderer.setSeriesStroke(0, modesStroke);
 
-
-    }
-
-  
+    }  
 
     /**
      * Create a chart.
@@ -308,19 +307,19 @@ public class mainprogram {
         renderer.setBaseShapesVisible(true);
         renderer.setBaseShapesFilled(true);
 
-
-
-        // label the points
-       /* 
-        NumberFormat format = NumberFormat.getNumberInstance();
-        format.setMaximumFractionDigits(2);
-        XYItemLabelGenerator generator =
-        new StandardXYItemLabelGenerator(
-        StandardXYItemLabelGenerator.DEFAULT_ITEM_LABEL_FORMAT,
-        format, format);
-        renderer.setBaseItemLabelGenerator(generator);
-        renderer.setBaseItemLabelsVisible(true);
-         */
+        // label the points        
+//        NumberFormat format = NumberFormat.getNumberInstance();
+//        format.setMaximumFractionDigits(2);
+//        
+//        XYItemLabelGenerator generator =
+//        new StandardXYItemLabelGenerator(
+//        StandardXYItemLabelGenerator.DEFAULT_ITEM_LABEL_FORMAT,
+//        format, format);
+//        
+//        renderer.setBaseItemLabelGenerator(generator);
+//        renderer.setBaseItemLabelsVisible(true);
+         
+        
         return chart;
     }
 }

@@ -10,28 +10,18 @@ import java.util.Arrays;
  *
  * @author victor
  */
-public class DataSample {
-    
-    protected long id;
-    protected Object[] features;
+public class DataSample extends DataItem {
     
     public DataSample(long id, Object[] features){
-        this.id = id;
-        this.features = features;
+        super(id, features);
     }
+   
     
-    public Object[] getFeatures(){
-        return this.features;
-    }
-    
-    public long getId(){
-        return this.id;
-    }
-    
+    @Override
     public String toString(){
         String str = "Source: id: " + this.id + " Features: ";
-        for(int i = 0; i < features.length; i++){
-            str += features[i] + ", ";
+        for (Object feature : features) {
+            str += feature + ", ";
         }
         return str;
     }

@@ -100,7 +100,7 @@ public class MySQLResultsReader implements ClusterResultReader {
 
         String query = "SELECT * FROM Mode WHERE id=" + mode_id;
         double bandwidth;
-        double[] features;
+        Object[] features;
 
         try {
             Statement stmt = conn.createStatement();
@@ -114,7 +114,7 @@ public class MySQLResultsReader implements ClusterResultReader {
             bandwidth = GetBandwidth(bandwidth_id);
 
             //Get features
-            features = new double[numFeatures];
+            features = new Object[numFeatures];
             for (int i = 0; i < numFeatures; i++) {
                 features[i] = rs.getDouble(i + 3);
             }
@@ -146,7 +146,7 @@ public class MySQLResultsReader implements ClusterResultReader {
                 long bandwidth_id = rs.getLong(2);
                 double bandwidth = GetBandwidth(bandwidth_id);
 
-                double[] features = new double[numFeatures];
+                Object[] features = new Object[numFeatures];
                 for (int i = 0; i < numFeatures; i++) {
                     features[i] = rs.getDouble(i + 3);
                 }
@@ -180,7 +180,7 @@ public class MySQLResultsReader implements ClusterResultReader {
             //Get the mode id, bandwidth and features            
             while (rs.next()) {
                 long mode_id = rs.getLong(1);
-                double[] features = new double[numFeatures];
+                Object[] features = new Object[numFeatures];
                 for (int i = 0; i < numFeatures; i++) {
                     features[i] = rs.getDouble(i + 3);
                 }

@@ -4,6 +4,7 @@
  */
 package com.clusteranalysis.plot;
 
+import java.util.ArrayList;
 import org.jfree.data.xy.DefaultXYDataset;
 /**
  *
@@ -18,13 +19,18 @@ public class ClustersDataSet extends DataSet {
     //se muestran y los que no, sin necesidad de crear y destruir objetos una vez que se han
     //leido los datos
     
+    private ArrayList<DataSerie> series;
+    
     public ClustersDataSet(){
-        
+        this.series = new ArrayList<DataSerie>();
+    }    
+    
+    public void addSeries(DataSerie serie){
+        this.series.add(serie);
+        super.addSeries(serie.GetName(), serie.GetDataSerie() );        
     }
     
-    
-    
-    public void addSeries(Comparable seriesKey, DataSerie serie){
-        super.addSeries(seriesKey, serie.GetDataSerie() );        
+    public DataSerie getSeries(int index){
+        return this.series.get(index);
     }
 }

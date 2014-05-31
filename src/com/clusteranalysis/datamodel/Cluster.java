@@ -34,6 +34,10 @@ public class Cluster {
         return this.samples;
     }
     
+    public DataSample GetSample(int index){
+        return this.samples.get(index);
+    }
+    
     public void AddSample(DataSample sample){
         this.samples.add(sample);
     }
