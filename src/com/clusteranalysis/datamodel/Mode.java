@@ -4,6 +4,7 @@
  */
 package com.clusteranalysis.datamodel;
 
+import java.util.List;
 /**
  *
  * @author victor
@@ -21,6 +22,7 @@ public class Mode extends DataItem{
         return this.bandwidth;
     }
    
+    @Override
     public String toString(){
         String str = "Mode: id: " + id + " Bandwidth: " + bandwidth + " Features: ";
         for(int i = 0; i < features.length; i++){
@@ -29,4 +31,6 @@ public class Mode extends DataItem{
         return str;
     }
     
+
+     
 }

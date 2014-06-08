@@ -8,6 +8,7 @@ package com.clusteranalysis.gui;
 //could just import javax.swing.* and java.awt.* etc..
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.text.NumberFormat;
 
@@ -40,11 +41,14 @@ import com.clusteranalysis.plot.ClustersDataSet;
 import com.clusteranalysis.plot.ModesDataSerie;
 import com.clusteranalysis.plot.ClusterDataSerie;
 import com.clusteranalysis.plot.ClusterToolTipGenerator;
+import java.util.Arrays;
 
 public class mainprogram {
 
     private static ClusterResultReader db;
     private JFrame guiFrame;
+    
+    private JPanel dataPanel;
 
     public mainprogram() {
         
@@ -91,7 +95,7 @@ public class mainprogram {
         //Create Chart and data panels
         final JFreeChart chart = CreateEmptyChart();
         ChartPanel plotPanel = new ChartPanel(chart, false);
-        JPanel dataPanel = new JPanel();
+        dataPanel = new JPanel();
 
         //Create left panel and add components
         JPanel leftPanel = new JPanel();
@@ -104,9 +108,6 @@ public class mainprogram {
         contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.X_AXIS));
         contentPane.add(leftPanel);
         contentPane.add(toolPanel);
-
-        //Data Panel
-        dataPanel.setBackground(Color.green);
 
         //Tool Panel
         Box toolBox = new Box(BoxLayout.Y_AXIS);
@@ -187,7 +188,6 @@ public class mainprogram {
 
         //make sure the JFrame is visible
         guiFrame.setVisible(true);
-
         System.out.println("Minimum size for tool pane: " + toolBox.getMinimumSize());
 
 
@@ -204,14 +204,17 @@ public class mainprogram {
         //Get modes for this bandwidth and data series for each mode
         List<Cluster> clusters;
         int numberClusters;
+        List<Integer> modeColumnIndexes;
+        
         try {
             clusters = db.GetClusters(bandwidth, variables);
             numberClusters = clusters.size();
+            modeColumnIndexes = db.GetFeatureIndexes(variables);
         } catch (ResultReaderException e) {
             JOptionPane.showMessageDialog(guiFrame, "Query to database failed", "Database error", JOptionPane.PLAIN_MESSAGE);
             return;
         }
-
+                
         //Create the data set
         final ClustersDataSet dataset = new ClustersDataSet();     
           
@@ -258,6 +261,31 @@ public class mainprogram {
         // set the renderer's stroke for each data serie        
         Stroke modesStroke = new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
         renderer.setSeriesStroke(0, modesStroke);
+        
+        //Populate the table model with data from clusters
+        ModeTableModel modeTableModel = new ModeTableModel(variables);
+        for (Cluster cluster : clusters) {
+            ArrayList<Object> row = new ArrayList<Object>();
+            Mode mode = cluster.GetMode();
+            
+            row.add( mode.getId() );
+            row.add( true );
+            row.add(cluster.GetNumberOfSamples());
+            Object features[] = mode.getFeatures( modeColumnIndexes );
+            row.addAll(Arrays.asList(features));
+            
+            modeTableModel.addRow(row);
+        }
+        
+        //Create the table of the data panel
+        JTable modeTable = new JTable(modeTableModel);
+        JScrollPane modeTableScrollPane = new JScrollPane(modeTable);
+        modeTable.setFillsViewportHeight(true);
+        dataPanel.add(modeTableScrollPane);
+        
+        dataPanel.repaint();
+        
+        
 
     }  
 

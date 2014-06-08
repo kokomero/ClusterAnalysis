@@ -4,7 +4,7 @@
  */
 package com.clusteranalysis.datamodel;
 
-import java.util.Arrays;
+import java.util.List;
 
 /**
  *
@@ -25,6 +25,8 @@ public class DataSample extends DataItem {
         }
         return str;
     }
+    
+    
     
     
 }

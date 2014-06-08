@@ -261,6 +261,21 @@ public class MySQLResultsReader implements ClusterResultReader {
         return names;
     }
 
+    @Override
+    public List<Integer> GetFeatureIndexes(List<String> attributeNames) throws ResultReaderException{
+        
+        //Get features names
+        List<String> featureNames = this.FeatureNames();
+        
+        List<Integer> indexes = new ArrayList<Integer>( attributeNames.size() );
+        for (String attributeName : attributeNames) {
+            indexes.add( featureNames.indexOf(attributeName) );
+        }
+        
+        return indexes;
+        
+    }
+    
     private long GetModeId(long bandwidth_id, long id_source) throws SQLException {
 
         //execute query and return result as a ResultSet

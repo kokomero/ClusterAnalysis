@@ -19,9 +19,11 @@ public interface ClusterResultReader {
     public List<Mode> GetModes(double bandwidth) throws ResultReaderException;
     public Mode GetMode(DataSample source, double bandwidth) throws ResultReaderException;
     public long NumberOfModes(double bandwidth) throws ResultReaderException;
+    public List<Integer> GetFeatureIndexes(List<String> attributeNames) throws ResultReaderException;
      
     public long NumberOfSources(Mode mode) throws ResultReaderException;   
     public List<DataSample> GetSources(Mode mode, List<String> attributeNames) throws ResultReaderException;    
+    
     
     public int NumberOfFeatures() throws ResultReaderException ;
     public List<String> FeatureNames()throws ResultReaderException ;

@@ -6,6 +6,8 @@
 
 package com.clusteranalysis.datamodel;
 
+import java.util.List;
+
 /**
  *
  * @author victor
@@ -28,6 +30,14 @@ public abstract class DataItem {
         return this.features;
     }    
     
+    public Object[] getFeatures(List<Integer> columnIndex){
+        Object[] tmp = new Object[columnIndex.size()];
+        for(int i = 0; i < columnIndex.size(); i++){
+            tmp[ i ] = features[ columnIndex.get(i)];
+        }
+        return tmp;
+    }
+
     @Override
     public abstract String toString();
     
