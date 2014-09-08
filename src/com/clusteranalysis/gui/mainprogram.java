@@ -283,7 +283,7 @@ public class mainprogram {
         modeTable.setFillsViewportHeight(true);
         dataPanel.add(modeTableScrollPane);
         
-        dataPanel.repaint();
+        dataPanel.repaint(); 
         
         
 
